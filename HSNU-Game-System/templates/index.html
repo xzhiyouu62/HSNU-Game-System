@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}角色卡系統{% endblock %}
+
+{% block extra_style %}
+<style>
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+}
+.player-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+.player-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+.player-card:hover {
+    transform: translateY(-5px);
+}
+.avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+    border: 3px solid #ddd;
+}
+.player-name {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+}
+.player-bio {
+    color: #666;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+.password-form {
+    display: flex;
+    gap: 10px;
+}
+.password-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+}
+.view-btn {
+    padding: 8px 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.view-btn:hover {
+    background: #0056b3;
+}
+.admin-link {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #28a745;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 手機響應式設計 */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+    }
+    .player-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    .player-card {
+        padding: 15px;
+    }
+    .avatar {
+        width: 60px;
+        height: 60px;
+    }
+    .player-name {
+        font-size: 1.2em;
+    }
+    .password-form {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .password-input, .view-btn {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .admin-link {
+        bottom: 10px;
+        right: 10px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>🎭 角色卡系統</h1>
+    {% if not players %}
+        <p style="text-align: center; color: #666; font-size: 1.2em;">目前沒有角色，請聯繫管理員新增角色。</p>
+    {% else %}
+        <div class="player-grid">
+        {% for player in players %}
+            <div class="player-card">
+                <img src="{{ url_for('static', filename='avatars/' + player.avatar_url) }}" 
+                     class="avatar" alt="{{ player.name }}的頭像">
+                <div class="player-name">{{ player.name }}</div>
+                <div class="player-bio">{{ player.bio or '這個角色還沒有簡介...' }}</div>
+                <form method="POST" action="{{ url_for('main.view_player', player_id=player.id) }}" class="password-form">
+                    <input type="password" name="pw" placeholder="輸入角色密碼" class="password-input" required>
+                    <button type="submit" class="view-btn">查看詳細</button>
+                </form>
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+</div>
+<a href="{{ url_for('admin.login') }}" class="admin-link">🔧 管理員</a>
+{% endblock %}
