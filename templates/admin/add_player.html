@@ -1,0 +1,230 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if edit_mode %}編輯角色{% else %}新增角色{% endif %}{% endblock %}
+
+{% block extra_style %}
+<style>
+h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+textarea {
+    height: 80px;
+    resize: vertical;
+}
+.section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+.section-title {
+    font-size: 1.2em;
+    color: #333;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+}
+.dynamic-fields {
+    display: grid;
+    gap: 15px;
+}
+.field-row {
+    display: grid;
+    grid-template-columns: 1fr 100px auto;
+    gap: 10px;
+    align-items: end;
+}
+.field-row.item-row {
+    grid-template-columns: 2fr 100px 2fr auto;
+}
+.actions {
+    text-align: center;
+    margin-top: 30px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+.remove-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+</style>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+    function addStatField() {
+        const container = document.getElementById('stats-container');
+        const div = document.createElement('div');
+        div.className = 'field-row';
+        div.innerHTML = `
+            <input name="stat_name" placeholder="數值名稱" value="">
+            <input name="stat_value" type="number" placeholder="數值" value="">
+            <button type="button" class="btn btn-danger remove-btn" onclick="removeField(this)">移除</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function addItemField() {
+        const container = document.getElementById('items-container');
+        const div = document.createElement('div');
+        div.className = 'field-row item-row';
+        div.innerHTML = `
+            <div style="display: flex; gap: 5px;">
+                <input name="item_name" placeholder="道具名稱" value="" style="flex: 1;">
+                <select onchange="fillItemFromTemplate(this)" style="width: 80px;">
+                    <option value="">從模板</option>
+                    {% for template in templates %}
+                    <option value="{{ template.name }}" data-desc="{{ template.description }}">{{ template.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <input name="item_count" type="number" placeholder="數量" value="">
+            <input name="item_desc" placeholder="道具描述" value="">
+            <button type="button" class="btn btn-danger remove-btn" onclick="removeField(this)">移除</button>
+        `;
+        container.appendChild(div);
+    }
+    
+    function fillItemFromTemplate(select) {
+        if (select.value) {
+            const row = select.closest('.field-row');
+            const nameInput = row.querySelector('input[name="item_name"]');
+            const descInput = row.querySelector('input[name="item_desc"]');
+            const selectedOption = select.options[select.selectedIndex];
+            
+            nameInput.value = select.value;
+            descInput.value = selectedOption.dataset.desc || '';
+            
+            // 重置選擇器
+            select.value = '';
+        }
+    }
+
+    function removeField(btn) {
+        btn.parentElement.remove();
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>{% if edit_mode %}✏️ 編輯角色{% else %}➕ 新增角色{% endif %}</h2>
+    
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>角色名稱</label>
+            <input name="name" placeholder="輸入角色名稱" value="{{ player.name if player else '' }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label>角色簡介</label>
+            <textarea name="bio" placeholder="輸入角色簡介...">{{ player.bio if player else '' }}</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>登入密碼</label>
+            <input name="password" type="password" placeholder="設定角色登入密碼" {% if not edit_mode %}required{% endif %}>
+            {% if edit_mode %}<small style="color: #666;">留空表示不更改密碼</small>{% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label>頭像圖片</label>
+            <input type="file" name="avatar" accept="image/*">
+            {% if edit_mode and player.avatar_url %}<small style="color: #666;">目前頭像：{{ player.avatar_url }}</small>{% endif %}
+        </div>
+
+        <div class="section">
+            <div class="section-title">📊 角色數值</div>
+            <div id="stats-container" class="dynamic-fields">
+                {% if edit_mode and player.stats %}
+                    {% for stat in player.stats %}
+                    <div class="field-row">
+                        <input name="stat_name" placeholder="數值名稱" value="{{ stat.name }}">
+                        <input name="stat_value" type="number" placeholder="數值" value="{{ stat.value }}">
+                        <button type="button" class="btn btn-danger remove-btn" onclick="removeField(this)">移除</button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    {% for i in range(3) %}
+                    <div class="field-row">
+                        <input name="stat_name" placeholder="數值名稱" value="">
+                        <input name="stat_value" type="number" placeholder="數值" value="">
+                        <button type="button" class="btn btn-danger remove-btn" onclick="removeField(this)">移除</button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <button type="button" class="btn btn-success" onclick="addStatField()" style="margin-top: 10px;">+ 新增數值</button>
+        </div>
+
+        <div class="section">
+            <div class="section-title">🎒 角色道具</div>
+            <div id="items-container" class="dynamic-fields">
+                {% if edit_mode and player.items %}
+                    {% for item in player.items %}
+                    <div class="field-row item-row">
+                        <div style="display: flex; gap: 5px;">
+                            <input name="item_name" placeholder="道具名稱" value="{{ item.name }}" style="flex: 1;">
+                            <select onchange="fillItemFromTemplate(this)" style="width: 80px;">
+                                <option value="">從模板</option>
+                                {% for template in templates %}
+                                <option value="{{ template.name }}" data-desc="{{ template.description }}">{{ template.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <input name="item_count" type="number" placeholder="數量" value="{{ item.count }}">
+                        <input name="item_desc" placeholder="道具描述" value="{{ item.description }}">
+                        <button type="button" class="btn btn-danger remove-btn" onclick="removeField(this)">移除</button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    {% for i in range(3) %}
+                    <div class="field-row item-row">
+                        <div style="display: flex; gap: 5px;">
+                            <input name="item_name" placeholder="道具名稱" value="" style="flex: 1;">
+                            <select onchange="fillItemFromTemplate(this)" style="width: 80px;">
+                                <option value="">從模板</option>
+                                {% for template in templates %}
+                                <option value="{{ template.name }}" data-desc="{{ template.description }}">{{ template.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <input name="item_count" type="number" placeholder="數量" value="">
+                        <input name="item_desc" placeholder="道具描述" value="">
+                        <button type="button" class="btn btn-danger remove-btn" onclick="removeField(this)">移除</button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <button type="button" class="btn btn-success" onclick="addItemField()" style="margin-top: 10px;">+ 新增道具</button>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">
+                {% if edit_mode %}💾 儲存修改{% else %}✅ 建立角色{% endif %}
+            </button>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

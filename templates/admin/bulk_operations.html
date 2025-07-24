@@ -1,0 +1,157 @@
+{% extends "admin/base.html" %}
+
+{% block title %}批量操作{% endblock %}
+
+{% block extra_style %}
+<style>
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.operation-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+.players-selection {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px;
+    background: white;
+}
+.player-checkbox {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.player-checkbox input {
+    width: auto;
+    margin-right: 10px;
+}
+.back-link {
+    margin-bottom: 20px;
+    display: inline-block;
+}
+
+/* 手機響應式設計 */
+@media (max-width: 768px) {
+    .operation-section {
+        padding: 15px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+function toggleAllPlayers(checkbox, formId) {
+    const checkboxes = document.querySelectorAll(`#${formId} input[name="players"]`);
+    checkboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+    });
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary back-link">← 回到控制台</a>
+    
+    <h1>⚡ 批量操作</h1>
+    
+    <!-- 批量新增數值 -->
+    <div class="operation-section">
+        <h3>📊 批量新增/修改數值</h3>
+        <form id="statForm" method="POST" action="{{ url_for('admin.bulk_add_stat') }}">
+            <div class="form-group">
+                <label for="stat_name">數值名稱</label>
+                <input type="text" id="stat_name" name="stat_name" placeholder="例如：智力、健康" required>
+            </div>
+            <div class="form-group">
+                <label for="stat_value">數值變化</label>
+                <input type="number" id="stat_value" name="stat_value" placeholder="例如：100、+50、-30" required>
+                <small style="color: #666;">正數為增加，負數為減少。如果角色沒有這個數值，將直接設定為此值。</small>
+            </div>
+            <div class="form-group">
+                <label>選擇角色</label>
+                <div style="margin-bottom: 10px;">
+                    <input type="checkbox" id="selectAllStats" onchange="toggleAllPlayers(this, 'statForm')" style="margin-right: 8px;">
+                    <label for="selectAllStats" style="display: inline; font-weight: normal; cursor: pointer;">全選/取消全選</label>
+                </div>
+                <div class="players-selection">
+                    {% for player in players %}
+                    <div class="player-checkbox">
+                        <input type="checkbox" name="players" value="{{ player.id }}" id="stat_player_{{ player.id }}">
+                        <label for="stat_player_{{ player.id }}">{{ player.name }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">✅ 執行數值操作</button>
+        </form>
+    </div>
+
+    <!-- 批量新增道具 -->
+    <div class="operation-section">
+        <h3>🎒 批量新增道具</h3>
+        <form id="itemForm" method="POST" action="{{ url_for('admin.bulk_add_item') }}">
+            <div class="form-group">
+                <label for="template_id">選擇道具模板</label>
+                <select id="template_id" name="template_id" required>
+                    <option value="">請選擇道具</option>
+                    {% for template in templates %}
+                    <option value="{{ template.id }}">{{ template.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="item_count">道具數量</label>
+                <input type="number" id="item_count" name="item_count" value="1" min="1" required>
+            </div>
+            <div class="form-group">
+                <label>選擇角色</label>
+                <div style="margin-bottom: 10px;">
+                    <input type="checkbox" id="selectAllItems" onchange="toggleAllPlayers(this, 'itemForm')" style="margin-right: 8px;">
+                    <label for="selectAllItems" style="display: inline; font-weight: normal; cursor: pointer;">全選/取消全選</label>
+                </div>
+                <div class="players-selection">
+                    {% for player in players %}
+                    <div class="player-checkbox">
+                        <input type="checkbox" name="players" value="{{ player.id }}" id="item_player_{{ player.id }}">
+                        <label for="item_player_{{ player.id }}">{{ player.name }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">✅ 執行道具操作</button>
+        </form>
+    </div>
+
+    {% if not players %}
+        <p style="text-align: center; color: #666;">目前沒有角色，請先新增角色。</p>
+    {% endif %}
+    
+    {% if not templates %}
+        <p style="text-align: center; color: #666;">目前沒有道具模板，請先<a href="{{ url_for('admin.item_templates') }}">新增道具模板</a>。</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}角色卡系統{% endblock %}
+
+{% block extra_style %}
+<style>
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+}
+.search-controls {
+    margin-bottom: 30px;
+}
+.search-input {
+    width: 100%;
+    max-width: 400px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    display: block;
+    margin: 0 auto;
+}
+.player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.player-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+.player-card:hover {
+    transform: translateY(-2px);
+}
+.avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #ddd;
+    flex-shrink: 0;
+}
+.player-info {
+    flex: 1;
+}
+.player-name {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+.player-bio {
+    color: #666;
+    line-height: 1.4;
+    font-size: 0.9em;
+}
+.password-form {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    width: 220px;
+    align-items: center;
+}
+.password-input {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    min-width: 0;
+}
+.password-form .view-btn {
+    padding: 10px 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.password-form .view-btn:hover {
+    background: #0056b3;
+}
+
+/* 條列顯示樣式 */
+.player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* 手機響應式設計 */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+    }
+    .search-input {
+        max-width: none;
+    }
+    .player-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+        padding: 15px;
+    }
+    .player-name {
+        font-size: 1.2em;
+    }
+    .password-form {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+    .password-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px;
+    }
+    .password-form .view-btn {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+function searchPlayers() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const players = document.querySelectorAll('.player-card');
+    
+    players.forEach(player => {
+        const name = player.dataset.name;
+        const bio = player.dataset.bio;
+        
+        if (name.includes(filter) || bio.includes(filter)) {
+            player.style.display = '';
+        } else {
+            player.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>🎭 角色卡系統</h1>
+    
+    {% if players %}
+        <div class="search-controls">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 搜尋角色名稱或簡介..." onkeyup="searchPlayers()">
+        </div>
+    {% endif %}
+    
+    {% if not players %}
+        <p style="text-align: center; color: #666; font-size: 1.2em;">目前沒有角色，請聯繫管理員新增角色。</p>
+    {% else %}
+        <div class="player-list" id="playersContainer">
+        {% for player in players %}
+            <div class="player-card" data-name="{{ player.name.lower() }}" data-bio="{{ (player.bio or '').lower() }}">
+                <img src="{{ url_for('static', filename='avatars/' + player.avatar_url) }}" 
+                     class="avatar" alt="{{ player.name }}的頭像">
+                <div class="player-info">
+                    <div class="player-name">{{ player.name }}</div>
+                    <div class="player-bio">{{ player.bio or '這個角色還沒有簡介...' }}</div>
+                </div>
+                <form method="POST" action="{{ url_for('main.view_player', player_id=player.id) }}" class="password-form">
+                    <input type="password" name="pw" placeholder="輸入角色密碼" class="password-input" required>
+                    <button type="submit" class="view-btn">查看詳細</button>
+                </form>
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
