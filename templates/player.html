@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player.name }} - 角色詳細資料{% endblock %}
+
+{% block extra_style %}
+<style>
+.container {
+    max-width: 1000px;
+    background: rgba(255, 255, 255, 0.95);
+}
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
+.avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+    border: 4px solid #007bff;
+}
+.player-name {
+    font-size: 2.5em;
+    color: #333;
+    margin-bottom: 10px;
+}
+.player-bio {
+    font-size: 1.1em;
+    color: #666;
+    line-height: 1.5;
+    max-width: 600px;
+    margin: 0 auto;
+}
+.stats-section, .items-section {
+    margin: 30px 0;
+}
+.section-title {
+    font-size: 1.8em;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #007bff;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+.stat-name {
+    font-size: 1em;
+    margin-bottom: 8px;
+    opacity: 0.9;
+}
+.stat-value {
+    font-size: 2em;
+    font-weight: bold;
+}
+.stat-edit-form {
+    display: none;
+    margin-top: 10px;
+}
+.stat-edit-input {
+    width: 80px;
+    padding: 5px;
+    border: none;
+    border-radius: 4px;
+    text-align: center;
+}
+.edit-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+    font-size: 12px;
+}
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+.item-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.item-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    border-color: #007bff;
+}
+.item-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #333;
+    margin-bottom: 5px;
+}
+.item-count {
+    display: inline-block;
+    background: #28a745;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.9em;
+    margin-bottom: 8px;
+}
+.item-description {
+    color: #666;
+    font-size: 0.9em;
+    line-height: 1.4;
+    display: none;
+}
+.item-card.expanded .item-description {
+    display: block;
+}
+.back-btn {
+    display: inline-block;
+    margin-top: 30px;
+    padding: 12px 24px;
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+.back-btn:hover {
+    background: #545b62;
+}
+.no-data {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 20px;
+}
+
+/* 手機響應式設計 */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    .avatar {
+        width: 80px;
+        height: 80px;
+    }
+    .player-name {
+        font-size: 1.8em;
+        margin-bottom: 8px;
+    }
+    .player-bio {
+        font-size: 1em;
+    }
+    .section-title {
+        font-size: 1.4em;
+        margin-bottom: 15px;
+    }
+    .stats-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    .stat-card {
+        padding: 15px;
+    }
+    .stat-value {
+        font-size: 1.5em;
+    }
+    .items-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .item-card {
+        padding: 12px;
+    }
+    .back-btn {
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+        margin-top: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+    function toggleItem(card) {
+        card.classList.toggle('expanded');
+    }
+    
+    function toggleStatEdit(statId) {
+        const form = document.getElementById('edit-form-' + statId);
+        const value = document.getElementById('stat-value-' + statId);
+        
+        if (form.style.display === 'none' || form.style.display === '') {
+            form.style.display = 'block';
+            value.style.display = 'none';
+        } else {
+            form.style.display = 'none';
+            value.style.display = 'block';
+        }
+    }
+    
+    function updateStat(statId, currentValue) {
+        const input = document.getElementById('change-input-' + statId);
+        const changeValue = parseInt(input.value) || 0;
+        
+        if (changeValue === 0) {
+            toggleStatEdit(statId);
+            return;
+        }
+        
+        // 發送 AJAX 請求
+        fetch('/admin/modify-stat/' + statId, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'change_value=' + changeValue
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 更新顯示的數值
+                document.getElementById('stat-value-' + statId).textContent = data.new_value;
+                input.value = '';
+                toggleStatEdit(statId);
+            } else {
+                alert('更新失敗，請重試');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('更新失敗，請重試');
+        });
+    }
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <img src="{{ url_for('static', filename='avatars/' + player.avatar_url) }}" 
+             class="avatar" alt="{{ player.name }}的頭像">
+        <div class="player-name">{{ player.name }}</div>
+        <div class="player-bio">{{ player.bio or '這個角色還沒有簡介...' }}</div>
+    </div>
+
+    <div class="stats-section">
+        <div class="section-title">📊 角色數值</div>
+        {% if player.stats %}
+            <div class="stats-grid">
+            {% for stat in player.stats %}
+                <div class="stat-card">
+                    {% if is_admin %}
+                    <button class="edit-btn" data-stat-id="{{ stat.id }}" onclick="toggleStatEdit(this.dataset.statId)">✏️</button>
+                    {% endif %}
+                    <div class="stat-name">{{ stat.name }}</div>
+                    <div class="stat-value" id="stat-value-{{ stat.id }}">{{ stat.value }}</div>
+                    {% if is_admin %}
+                    <div class="stat-edit-form" id="edit-form-{{ stat.id }}" style="display: none;">
+                        <input type="number" class="stat-edit-input" id="change-input-{{ stat.id }}" 
+                               placeholder="+/-">
+                        <button data-stat-id="{{ stat.id }}" data-current-value="{{ stat.value }}" onclick="updateStat(this.dataset.statId, this.dataset.currentValue)" 
+                                style="background: white; color: #667eea; border: none; border-radius: 4px; padding: 5px 10px; margin-left: 5px; cursor: pointer;">✓</button>
+                        <button data-stat-id="{{ stat.id }}" onclick="toggleStatEdit(this.dataset.statId)" 
+                                style="background: white; color: #667eea; border: none; border-radius: 4px; padding: 5px 10px; margin-left: 5px; cursor: pointer;">✗</button>
+                    </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-data">暫無數值資料</div>
+        {% endif %}
+    </div>
+
+    <div class="items-section">
+        <div class="section-title">🎒 道具清單</div>
+        {% if player.items %}
+            <div class="items-grid">
+            {% for item in player.items %}
+                <div class="item-card" onclick="toggleItem(this)">
+                    <div class="item-name">{{ item.name }}</div>
+                    <div class="item-count">x{{ item.count }}</div>
+                    <div class="item-description">{{ item.description or '沒有描述' }}</div>
+                </div>
+            {% endfor %}
+            </div>
+            <p style="color: #666; font-size: 0.9em; margin-top: 15px;">💡 點擊道具卡片查看詳細描述</p>
+        {% else %}
+            <div class="no-data">暫無道具</div>
+        {% endif %}
+    </div>
+
+    <a href="{{ url_for('main.index') }}" class="back-btn">← 回到角色列表</a>
+</div>
+{% endblock %}

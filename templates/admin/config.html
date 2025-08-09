@@ -1,0 +1,142 @@
+{% extends "admin/base.html" %}
+
+{% block title %}系統設定{% endblock %}
+
+{% block extra_style %}
+<style>
+h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+.section-title {
+    font-size: 1.2em;
+    color: #333;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 5px;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+input, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+.actions {
+    text-align: center;
+    margin-top: 30px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+.preview {
+    width: 100%;
+    height: 200px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-top: 10px;
+}
+.current-bg {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.message {
+    background: #d4edda;
+    color: #155724;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 20px 0;
+}
+.error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 20px 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>⚙️ 系統設定</h2>
+    
+    <div class="section">
+        <div class="section-title">🖼️ 背景設定</div>
+        
+        {% if config.background_url %}
+        <div class="current-bg">
+            <p><strong>目前背景：</strong></p>
+            <img src="{{ config.background_url }}" class="preview" alt="目前背景">
+        </div>
+        {% endif %}
+        
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>選擇新背景圖片</label>
+                <input type="file" name="background" accept="image/*">
+                <small style="color: #666;">支援 JPG、PNG、GIF 格式</small>
+            </div>
+            
+            <div class="form-group">
+                <label>或使用預設背景</label>
+                <select name="preset_background">
+                    <option value="">-- 選擇預設背景 --</option>
+                    <option value="/static/backgrounds/gradient1.jpg">漸層背景 1</option>
+                    <option value="/static/backgrounds/gradient2.jpg">漸層背景 2</option>
+                    <option value="/static/backgrounds/pattern1.jpg">圖案背景 1</option>
+                    <option value="/static/backgrounds/nature1.jpg">自然風景 1</option>
+                </select>
+            </div>
+            
+            <button type="submit" name="action" value="background" class="btn btn-primary">💾 更新背景</button>
+        </form>
+    </div>
+
+    <div class="section">
+        <div class="section-title">🔐 管理員密碼</div>
+        <form method="POST">
+            <div class="form-group">
+                <label>新管理員密碼</label>
+                <input type="password" name="new_password" placeholder="輸入新的管理員密碼">
+            </div>
+            
+            <div class="form-group">
+                <label>確認新密碼</label>
+                <input type="password" name="confirm_password" placeholder="再次輸入新密碼">
+            </div>
+            
+            <button type="submit" name="action" value="password" class="btn btn-primary">🔑 更新密碼</button>
+        </form>
+    </div>
+
+    {% if message %}
+    <div class="message">{{ message }}</div>
+    {% endif %}
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <div class="actions">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">← 返回管理台</a>
+    </div>
+</div>
+{% endblock %}

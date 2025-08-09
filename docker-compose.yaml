@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  game-system:
+    build: .
+    container_name: hsnu-game-system
+    ports:
+      - "20000:80"
+    restart: unless-stopped
+    volumes:
+      - .:/app

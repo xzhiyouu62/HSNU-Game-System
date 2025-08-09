@@ -1,0 +1,141 @@
+{% extends "admin/base.html" %}
+
+{% block title %}修改紀錄{% endblock %}
+
+{% block extra_style %}
+<style>
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.filter-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+.filter-bar select, .filter-bar input {
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.table th, .table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: #333;
+}
+.table th {
+    background: #f7f7f7;
+    text-align: left;
+}
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    color: white;
+}
+.badge.action { background: #007bff; }
+.badge.entity { background: #6c757d; }
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 15px;
+}
+.pagination a {
+    padding: 6px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #333;
+}
+.pagination .active {
+    background: #007bff;
+    color: white;
+}
+.actions {
+    display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>📜 修改紀錄</h1>
+
+    <div class="actions">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">⬅ 返回控制台</a>
+    </div>
+
+    <form class="filter-bar" method="get">
+        <select name="action">
+            <option value="">動作（全部）</option>
+            {% set actions = ['player_created','player_updated','player_deleted','player_details_reset','item_template_created','item_template_deleted','config_updated','bulk_add_stat','bulk_add_item','stat_modified'] %}
+            {% for a in actions %}
+                <option value="{{ a }}" {% if a == action %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+        </select>
+        <select name="entity_type">
+            <option value="">類型（全部）</option>
+            {% for et in ['Player','ItemTemplate','Config','Stat','Item'] %}
+                <option value="{{ et }}" {% if et == entity_type %}selected{% endif %}>{{ et }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">篩選</button>
+        <a href="{{ url_for('admin.view_logs') }}" class="btn btn-secondary">重置</a>
+    </form>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>時間</th>
+                <th>動作</th>
+                <th>類型</th>
+                <th>關聯ID</th>
+                <th>描述</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if not logs %}
+            <tr>
+                <td colspan="6" style="text-align:center; color:#666;">目前尚無紀錄</td>
+            </tr>
+            {% else %}
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.id }}</td>
+                <td>{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') if log.created_at else '-' }}</td>
+                <td><span class="badge action">{{ log.action }}</span></td>
+                <td><span class="badge entity">{{ log.entity_type }}</span></td>
+                <td>{{ log.entity_id or '-' }}</td>
+                <td>{{ log.description or '-' }}</td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+        </tbody>
+    </table>
+
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.view_logs', page=pagination.prev_num, action=action, entity_type=entity_type) }}">上一頁</a>
+        {% endif %}
+        <span class="active">第 {{ pagination.page }} / {{ pagination.pages }} 頁</span>
+        {% if pagination.has_next %}
+            <a href="{{ url_for('admin.view_logs', page=pagination.next_num, action=action, entity_type=entity_type) }}">下一頁</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

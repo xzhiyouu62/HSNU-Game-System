@@ -1,0 +1,197 @@
+{% extends "admin/base.html" %}
+
+{% block title %}管理員控制台{% endblock %}
+
+{% block extra_style %}
+<style>
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.search-box {
+    margin-bottom: 20px;
+}
+.search-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+.actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+.players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.player-item {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: transform 0.2s ease;
+}
+.player-item:hover {
+    transform: translateY(-2px);
+}
+.player-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #ddd;
+}
+.player-info {
+    flex: 1;
+}
+.player-name {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+.player-bio {
+    color: #666;
+    margin-bottom: 10px;
+}
+.player-stats {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+.stat-badge {
+    background: #e3f2fd;
+    color: #1976d2;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.9em;
+}
+.player-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+/* 手機響應式設計 */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.5em;
+        margin-bottom: 20px;
+    }
+    .actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .actions .btn {
+        width: 100%;
+    }
+    .player-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    .player-info {
+        text-align: center;
+    }
+    .player-stats {
+        justify-content: center;
+    }
+    .player-actions {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+    .player-actions .btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_head %}
+<script>
+function searchPlayers() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const players = document.querySelectorAll('.player-item');
+    
+    players.forEach(player => {
+        const name = player.querySelector('.player-name').textContent.toLowerCase();
+        const bio = player.querySelector('.player-bio').textContent.toLowerCase();
+        
+        if (name.includes(filter) || bio.includes(filter)) {
+            player.style.display = '';
+        } else {
+            player.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>🛠️ 管理員控制台</h1>
+    
+    <div class="actions">
+        <a href="{{ url_for('admin.add_player') }}" class="btn btn-success">➕ 新增角色</a>
+        <a href="{{ url_for('admin.item_templates') }}" class="btn btn-warning">📦 道具模板</a>
+        <a href="{{ url_for('admin.bulk_operations') }}" class="btn btn-primary">⚡ 批量操作</a>
+        <a href="{{ url_for('admin.view_logs') }}" class="btn btn-secondary">📜 修改紀錄</a>
+        <a href="{{ url_for('admin.config') }}" class="btn btn-warning">⚙️ 系統設定</a>
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">🏠 回到首頁</a>
+        <a href="{{ url_for('admin.logout') }}" class="btn btn-secondary">🚪 登出</a>
+    </div>
+
+    <div class="search-box">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 搜尋角色名稱或簡介..." onkeyup="searchPlayers()">
+    </div>
+
+    <h2>角色管理</h2>
+    {% if not players %}
+        <p style="text-align: center; color: #666;">目前沒有角色，點擊上方「新增角色」來建立第一個角色。</p>
+    {% else %}
+        <div class="players-list">
+        {% for player in players %}
+            <div class="player-item">
+                <img src="{{ url_for('static', filename='avatars/' + player.avatar_url) }}" 
+                     class="player-avatar" alt="{{ player.name }}的頭像">
+                <div class="player-info">
+                    <div class="player-name">{{ player.name }}</div>
+                    <div class="player-bio">{{ player.bio or '無簡介' }}</div>
+                    <div class="player-stats">
+                        {% for stat in player.stats[:3] %}
+                            <span class="stat-badge">{{ stat.name }}: {{ stat.value }}</span>
+                        {% endfor %}
+                        {% if player.stats|length > 3 %}
+                            <span class="stat-badge">+{{ player.stats|length - 3 }} 更多</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="player-actions">
+                    <a href="{{ url_for('admin.edit_player', player_id=player.id) }}" 
+                       class="btn btn-primary btn-sm">✏️ 編輯</a>
+                    <a href="{{ url_for('admin.delete_player', player_id=player.id) }}" 
+                       class="btn btn-danger btn-sm" 
+                       onclick="return confirm('確定要刪除角色「{{ player.name }}」嗎？')">🗑️ 刪除</a>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

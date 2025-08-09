@@ -1,0 +1,113 @@
+{% extends "admin/base.html" %}
+
+{% block title %}道具模板管理{% endblock %}
+
+{% block extra_style %}
+<style>
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 30px;
+}
+.add-template-form {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+.form-group {
+    margin-bottom: 15px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+.form-group input, .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+.templates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.template-item {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.template-info h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+}
+.template-info p {
+    margin: 0;
+    color: #666;
+}
+.back-link {
+    margin-bottom: 20px;
+    display: inline-block;
+}
+
+/* 手機響應式設計 */
+@media (max-width: 768px) {
+    .template-item {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .template-info {
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary back-link">← 回到控制台</a>
+    
+    <h1>📦 道具模板管理</h1>
+    
+    <div class="add-template-form">
+        <h3>新增道具模板</h3>
+        <form method="POST" action="{{ url_for('admin.add_item_template') }}">
+            <div class="form-group">
+                <label for="name">道具名稱</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="description">道具描述</label>
+                <textarea id="description" name="description" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-success">➕ 新增模板</button>
+        </form>
+    </div>
+
+    <h2>道具模板列表</h2>
+    {% if not templates %}
+        <p style="text-align: center; color: #666;">目前沒有道具模板，請新增模板。</p>
+    {% else %}
+        <div class="templates-list">
+        {% for template in templates %}
+            <div class="template-item">
+                <div class="template-info">
+                    <h3>{{ template.name }}</h3>
+                    <p>{{ template.description or '無描述' }}</p>
+                </div>
+                <a href="{{ url_for('admin.delete_item_template', template_id=template.id) }}" 
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('確定要刪除道具模板「{{ template.name }}」嗎？')">🗑️ 刪除</a>
+            </div>
+        {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
